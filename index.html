@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafío IA - Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --card-bg: #1f2833;
+            --neon-blue: #66fcf1;
+            --neon-teal: #45a29e;
+            --text-color: #e0e2db;
+            --btn-bg: #141b22;
+            --error: #ff4d4d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1, h2 {
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 580px;
+            padding: 35px 30px;
+            border-radius: 16px;
+            box-shadow: 0 0 25px rgba(102, 252, 241, 0.25);
+            border: 1px solid rgba(102, 252, 241, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        h1 span {
+            color: var(--neon-blue);
+            text-shadow: 0 0 12px var(--neon-blue);
+        }
+
+        p.subtitle {
+            font-size: 1rem;
+            color: var(--neon-teal);
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px;
+            background: #0f141c;
+            border: 2px solid var(--neon-teal);
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        input:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 12px rgba(102, 252, 241, 0.4);
+        }
+
+        .neon-btn {
+            width: 100%;
+            padding: 16px;
+            margin-top: 15px;
+            background-color: transparent;
+            border: 2px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .neon-btn:hover {
+            background-color: var(--neon-blue);
+            color: var(--bg-color);
+            box-shadow: 0 0 18px var(--neon-blue);
+        }
+
+        .error-msg {
+            color: var(--error);
+            font-size: 0.95rem;
+            min-height: 22px;
+            margin-top: 5px;
+        }
+
+        /* Utilidad de visualización */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Pantalla de juego */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--neon-teal);
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(69, 162, 158, 0.3);
+            padding-bottom: 10px;
+        }
+
+        #question-text {
+            font-size: 1.35rem;
+            color: #ffffff;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .options-list button {
+            width: 100%;
+            padding: 16px;
+            background: var(--btn-bg);
+            border: 1px solid var(--neon-teal);
+            color: #ffffff;
+            font-size: 1.05rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.2s ease;
+        }
+
+        .options-list button:hover:not([disabled]) {
+            border-color: var(--neon-blue);
+            background: #1b2430;
+            transform: translateX(4px);
+        }
+
+        .options-list button.correct {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: #ffffff;
+        }
+
+        .options-list button.wrong {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: #ffffff;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(102, 252, 241, 0.2);
+            border-top: 5px solid var(--neon-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 25px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Tabla de posiciones */
+        .table-wrap {
+            margin: 20px 0;
+            max-height: 280px;
+            overflow-y: auto;
+            border: 1px solid rgba(69, 162, 158, 0.3);
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(69, 162, 158, 0.2);
+        }
+
+        th {
+            background: #121820;
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            position: sticky;
+            top: 0;
+        }
+
+        tr.current-user {
+            background: rgba(102, 252, 241, 0.15);
+            color: var(--neon-blue);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- 1. Pantalla Inicial (Registro) -->
+        <div id="screen-login">
+            <h1>DESAFÍO <span>IA</span></h1>
+            <p class="subtitle">Pon a prueba tu conocimiento sobre Inteligencia Artificial</p>
+            
+            <div class="input-group">
+                <input type="text" id="nickname" placeholder="Tu Nombre o Nickname" autocomplete="off">
+                <input type="email" id="email" placeholder="Tu Correo Electrónico" autocomplete="off">
+            </div>
+
+            <p id="error-message" class="error-msg"></p>
+            <button onclick="handleStart()" class="neon-btn">COMENZAR A JUGAR</button>
+        </div>
+
+        <!-- 2. Pantalla de Preguntas -->
+        <div id="screen-game" class="hidden">
+            <div class="game-header">
+                <span id="counter">Pregunta 1/10</span>
+                <span id="score">Puntaje: 0</span>
+            </div>
+            
+            <h2 id="question-text">Cargando pregunta...</h2>
+            
+            <div id="options-container" class="options-list"></div>
+        </div>
+
+        <!-- 3. Pantalla de Envío / Carga -->
+        <div id="screen-loading" class="hidden">
+            <h2 style="color: var(--neon-blue); font-size: 1.3rem;">Registrando tus respuestas...</h2>
+            <div class="spinner"></div>
+            <p>Conectando con la base de datos de Google Sheets...</p>
+        </div>
+
+        <!-- 4. Tabla de Resultados / Leaderboard -->
+        <div id="screen-results" class="hidden">
+            <h1>POSICIONES <span>IA</span></h1>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nickname</th>
+                            <th>Puntos</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
+            </div>
+            <button onclick="location.reload()" class="neon-btn">JUGAR OTRA VEZ</button>
+        </div>
+
+    </div>
+
+    <script>
+        // === ATENCIÓN: PEGA TU URL DE GOOGLE APPS SCRIPT AQUÍ ABAJO ===
+        // Reemplaza "TU_URL_DE_APPS_SCRIPT_AQUI" por tu enlace real.
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwEREMFuLWL3D6D12ncsMyciou1R5WoZxuFA3oh-4uBz9_4p0SMAWsKvliQbF2MngObUw/exec";
+
+        const questions = [
+            {
+                q: "¿Qué significan las siglas 'IA'?",
+                options: ["Interfaz Avanzada", "Inteligencia Artificial", "Internet Artificial", "Integración Algorítmica"],
+                correct: 1
+            },
+            {
+                q: "¿Qué test evalúa si una máquina puede exhibir una conducta indistinguible de la humana?",
+                options: ["Test de Einstein", "Test de Turing", "Prueba de Asimov", "Algoritmo de Von Neumann"],
+                correct: 1
+            },
+            {
+                q: "¿Qué arquitectura neuronal es la base de modelos como ChatGPT o Gemini?",
+                options: ["Transformers", "Árboles de Decisión", "Redes Convolucionales (CNN)", "K-Means"],
+                correct: 0
+            },
+            {
+                q: "¿Qué significa 'LLM' en el ámbito moderno de la IA?",
+                options: ["Low Level Machine", "Large Language Model", "Logic Learning Method", "Local Linear Model"],
+                correct: 1
+            },
+            {
+                q: "¿Qué es el 'Machine Learning'?",
+                options: [
+                    "Sistemas que aprenden y mejoran a partir de datos sin ser programados explícitamente",
+                    "Construcción exclusiva de robots industriales",
+                    "Programas que solo leen páginas web",
+                    "Un lenguaje de programación sustituto de C++"
+                ],
+                correct: 0
+            },
+            // --- AQUÍ EMPIEZAN LAS 5 PREGUNTAS NUEVAS ---
+            {
+                q: "¿Cuál de estos es un tipo de aprendizaje automático donde el modelo aprende de datos NO etiquetados?",
+                options: ["Aprendizaje Supervisado", "Aprendizaje por Refuerzo", "Aprendizaje No Supervisado", "Transfer Learning"],
+                correct: 2
+            },
+            {
+                q: "¿Qué es el 'Prompt Engineering'?",
+                options: [
+                    "El diseño de hardware para servidores de IA",
+                    "La técnica de diseñar y optimizar instrucciones para modelos de IA generativa",
+                    "Un error común en redes neuronales profundas",
+                    "La traducción automática de lenguajes de programación"
+                ],
+                correct: 1
+            },
+            {
+                q: "En el contexto de la IA, ¿qué son las 'Alucinaciones'?",
+                options: [
+                    "Cuando el servidor se sobrecalienta",
+                    "Cuando el modelo procesa imágenes borrosas",
+                    "Cuando la IA genera respuestas incorrectas, inventadas o sin sentido, presentándolas como hechos",
+                    "Un tipo especial de red neuronal visual"
+                ],
+                correct: 2
+            },
+            {
+                q: "¿Qué empresa desarrolló originalmente la arquitectura 'Transformer' en 2017?",
+                options: ["OpenAI", "Meta", "Google", "Microsoft"],
+                correct: 2
+            },
+            {
+                q: "El 'Aprendizaje por Refuerzo' se basa principalmente en...",
+                options: [
+                    "Clasificar millones de fotos",
+                    "El concepto de recompensas y castigos para maximizar un resultado",
+                    "Traducir textos usando diccionarios",
+                    "Copiar el código de otros programas"
+                ],
+                correct: 1
+            }
+        ];
+
+        let currentIndex = 0;
+        let userPoints = 0;
+        let userData = { nickname: "", email: "" };
+
+        function switchScreen(activeId) {
+            const screens = ['screen-login', 'screen-game', 'screen-loading', 'screen-results'];
+            screens.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(activeId).classList.remove('hidden');
+        }
+
+        function handleStart() {
+            const nick = document.getElementById('nickname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const err = document.getElementById('error-message');
+
+            if (!nick || !email) {
+                err.innerText = "Debes completar ambos campos para continuar.";
+                return;
+            }
+
+            if (!email.includes('@') || !email.includes('.')) {
+                err.innerText = "Ingresa un correo electrónico válido.";
+                return;
+            }
+
+            userData.nickname = nick;
+            userData.email = email;
+            err.innerText = "";
+            
+            currentIndex = 0;
+            userPoints = 0;
+            
+            switchScreen('screen-game');
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            const qData = questions[currentIndex];
+            document.getElementById('counter').innerText = `Pregunta ${currentIndex + 1}/${questions.length}`;
+            document.getElementById('score').innerText = `Puntaje: ${userPoints}`;
+            document.getElementById('question-text').innerText = qData.q;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = "";
+
+            qData.options.forEach((optionText, i) => {
+                const btn = document.createElement('button');
+                btn.innerText = optionText;
+                btn.onclick = () => handleAnswer(i, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(chosenIndex, buttonElement) {
+            const qData = questions[currentIndex];
+            const buttons = document.querySelectorAll('#options-container button');
+            
+            // Bloqueamos los botones
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (chosenIndex === qData.correct) {
+                buttonElement.classList.add('correct');
+                userPoints += 100; // 100 puntos por cada una correcta
+            } else {
+                buttonElement.classList.add('wrong');
+                buttons[qData.correct].classList.add('correct');
+            }
+
+            document.getElementById('score').innerText = `Puntaje: ${userPoints}`;
+
+            setTimeout(() => {
+                currentIndex++;
+                if (currentIndex < questions.length) {
+                    displayQuestion();
+                } else {
+                    finishGame();
+                }
+            }, 1200);
+        }
+
+        function finishGame() {
+            switchScreen('screen-loading');
+            userData.score = userPoints;
+
+            if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "TU_URL_DE_APPS_SCRIPT_AQUI") {
+                // Si no se pegó la URL, mostramos error y el fallback local
+                alert("Atención: No has configurado la URL de Google Sheets en el código. Mostrando tabla de prueba.");
+                showFallbackLeaderboard();
+                return;
+            }
+
+            // Enviamos al Spreadsheet
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(userData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "error") {
+                    alert(data.message + "\nSin embargo, puedes ver los resultados actuales.");
+                }
+                fetchScores();
+            })
+            .catch(err => {
+                console.error("Error al guardar en Spreadsheet:", err);
+                alert("Hubo un error de conexión con la base de datos.");
+                fetchScores();
+            });
+        }
+
+        function fetchScores() {
+            fetch(APPS_SCRIPT_URL)
+            .then(res => res.json())
+            .then(renderTable)
+            .catch(() => showFallbackLeaderboard());
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = "";
+
+            data.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                if (row.nickname.toLowerCase() === userData.nickname.toLowerCase()) {
+                    tr.classList.add('current-user');
+                }
+                tr.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td>${row.nickname}</td>
+                    <td>${row.score}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            switchScreen('screen-results');
+        }
+
+        function showFallbackLeaderboard() {
+            const mockData = [
+                { nickname: userData.nickname || "Tú", score: userPoints },
+                { nickname: "CiberBot", score: 800 },
+                { nickname: "NeoIA", score: 600 },
+                { nickname: "AdaLovelace", score: 400 }
+            ];
+            mockData.sort((a, b) => b.score - a.score);
+            renderTable(mockData);
+        }
+    </script>
+</body>
+</html>
